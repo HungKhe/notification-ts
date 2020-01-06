@@ -3,6 +3,7 @@ const router = express.Router();
 const config = require('../../config');
 const oauthCtrl = require('../controller/install/oauth.ctrl');
 const uploadCtrl = require('../controller/upload/upload.ctrl');
+const createNotiCtrl = require('../controller/notify/create.ctrl');
 const webhook = require('../helper/webhook');
 
 router.route('/webhooks')
@@ -25,5 +26,8 @@ router.route('/grandservice')
 
 router.route('/upload')
     .post(uploadCtrl.initUploadImage)
+
+router.route('/notify/create')
+    .post(createNotiCtrl.initCreateNotify)
 
 module.exports = router;

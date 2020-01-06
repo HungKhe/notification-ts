@@ -37,11 +37,11 @@ module.exports = {
         });
       }
       const processedFile = req.file || {};
+      console.log('processedFile: ', processedFile)
       res.json({
         error: false,
         message: "Upload thành công!",
-        path: processedFile.path,
-        fileName: processedFile.originalname
+        fileName: processedFile.filename
       });
     });
     // createMulterFile(function(data) {

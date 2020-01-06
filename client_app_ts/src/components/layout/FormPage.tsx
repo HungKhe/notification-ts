@@ -7,6 +7,8 @@ interface Fields {
 }
 interface Props {
   fields?: any;
+  loading?: boolean;
+  appCreateNotify?: (noti: any) => void;
 }
 interface State {
   loading: boolean;
@@ -15,9 +17,9 @@ interface State {
 class CreatePage extends Component<Props, State> {
   static defaultProps: Props = {
     fields: {}
-  }; 
+  };
   state: State = {
-    loading: false,
+    loading: this.props.loading || false,
     fields: this.props.fields || {}
   };
   initHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,15 +33,18 @@ class CreatePage extends Component<Props, State> {
     this.setState({
       fields: notifiObject
     });
-    console.log(this.state.fields);
   };
   handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // event.stopPropagation();
-    this.setState({
-      loading: true
-    });
+    // this.setState({
+    //   loading: true
+    // });
+    console.log(this.state.fields);
   };
+  componentWillReceiveProps(newProps: Props) {
+    console.log("newProps: ", newProps);
+  }
   render() {
     return (
       <>

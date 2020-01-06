@@ -2,7 +2,7 @@ export interface uploadState {
   error: boolean;
   loading: boolean;
   message: string;
-  imgUrl: string;
+  fileName: string;
 }
 export interface uploadApp {
     upload: uploadState

@@ -1,4 +1,4 @@
-import * as Types from '../constants/typeUpload';
+import * as Types from '../../constants/upload/typeUpload';
 export const actUploadImage = (file: File): Types.UploadImageTypes => {
     return {
         type: Types.UPLOAD_IMAGE,

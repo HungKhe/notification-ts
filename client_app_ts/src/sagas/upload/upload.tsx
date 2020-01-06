@@ -1,7 +1,7 @@
-import * as Types from '../../constants/typeUpload';
+import * as Types from '../../constants/upload/typeUpload';
 import { takeEvery, call, put, delay } from "redux-saga/effects";
 import Service from '../../utils/service';
-import { actUploadImageFail, actUploadImageSuccess } from '../../actions/upload';
+import { actUploadImageFail, actUploadImageSuccess } from '../../actions/upload/upload';
 
 function uploadImage(file: File){
     return Service.apiUploadImage(file);

@@ -3,6 +3,9 @@ export default {
   apiUploadImage(file) {
     return Api().post(`upload`, file);
   },
+  apiCreateNotify(noti) {
+    return Api().post(`notify/create`, noti);
+  },
   fetchListNotification() {
     return Api().get("notification");
   },
