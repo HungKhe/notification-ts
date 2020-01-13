@@ -6,15 +6,14 @@ const initialState: Types.createNotiState = {
 };
 const createNotify = (state = initialState, action: Types.CreateNotifyTypes) => {
   switch (action.type) {
+    case Types.CREATE_RESET_STATE:
+      return initialState;
     case Types.CREATE_NOTIFY:
-      console.log("Reducer: ", action.payload);
-      return { ...state, loading: true };
+      return { ...state, loading: true, message: '' };
     case Types.CREATE_NOTIFY_SUCCESS:
-      console.log("Reducer succ: ", action.payload);
-      return { ...state };
+      return { ...state, error: action.payload.error, loading: false, message: action.payload.message };
     case Types.CREATE_NOTIFY_FAIL:
-      console.log("Reducer err: ", action.payload);
-      return { ...state };
+      return { ...state, loading: false, error: true, message: action.payload.toString() };
     default:
       return state;
   }

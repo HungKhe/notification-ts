@@ -1,3 +1,4 @@
+const model = require('../../model/model');
 const shop_db = require('../../model/shops');
 module.exports = {
     dbAddOneShop: async shop => {
@@ -17,6 +18,27 @@ module.exports = {
         if(!domain || !type || !objValue) return result;
         result = await shop_db.findOneAndUpdate({ 'shop_domain': domain }, { $set: { [type]: objValue } }, { new: true}).lean().exec().then(r => r).catch(err => err);
         return result;
+    },
+    dbUpdateFieldShop: (domain, type, objValue) => {
+        return new Promise((resolve, reject) => {
+            shop_db.findOneAndUpdate({ 'shop_domain': domain }, { $set: { [type]: objValue } }, { new: true }, (err, data) => {
+                if(err) reject(err);
+                resolve(data.list_notify);
+            });
+        })
+        return shop_db.findOneAndUpdate({ 'shop_domain': domain }, { $set: { [type]: objValue } }, { new: true }, (err, data) => {
+            if(err) return err;
+            console.log('dttttt: ', data.list_notify)
+            return data;
+        });
+    },
+    dbFindNotifyWithId: (domain, id) => {
+        return new Promise((resolve, reject) => {
+            shop_db.find({ 'shop_domain': domain }, { list_notify: { $elemMatch: { _id: model.Types.ObjectId(id) } } }, (err, data) => {
+                if(err) reject(err);
+                resolve(data);
+            });
+        })
     },
     dbFindDataShopWithField: async (domain, fields) => {
         let result = null;

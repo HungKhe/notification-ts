@@ -1,33 +1,52 @@
-import React, { useState } from "react";
-import { Container, Table } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { connect } from "react-redux";
+import { Container, Table, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import Search from "../../components/layout/Search";
 import Checkbox from "../../components/snippet/Checkbox";
+import ModalConfirm from '../../components/snippet/ModalConfirm';
 import { initCheckTypeUrl } from "../../utils/utils";
-interface itemNoti {
-    _id: string;
-    checked: boolean;
-    notifyIcon: string;
-    notifyName: string;
-    notifyStatus: boolean;
-    notifyType: string;
-    notifyCreateTime: string;
+import * as Types from "../../constants/notify/fetch";
+import { actFetchNotify, actDeleteNotify } from "../../actions/notify/fetch";
+import Loading from "../../components/snippet/Loading";
+import Snackbar from '../../components/snippet/Snackbar';
+interface Props {
+  error: boolean;
+  loading: boolean;
+  message: string;
+  list_notify: Types.notiFetch[];
+  appFetchListNotify: () => void;
+  appDeleteListNotify: (list: any[]) => void;
+  appResetStateNotify: () => void;
 }
-const HomePage: React.FC = () => {
+const HomePage: React.FC<Props> = props => {
+  const { error, loading, message, list_notify, appFetchListNotify, appDeleteListNotify, appResetStateNotify } = props;
+  const [stMessage, setMessage] = useState<string>(message);
+  let [stListNotify, setListNotify] = useState<Types.notiFetch[]>(list_notify);
   let [count, setCount] = useState<number>(0);
   let [checkAll, setCheckAll] = useState<boolean>(false);
-  let [arrItemRemove, setArrItemRemove] = useState<itemNoti[]>([]);
+  let [arrItemRemove, setArrItemRemove] = useState<any[]>([]);
   let [showModal, setShowModal] = useState<boolean>(false);
-  const initRenderListNotify = (list: itemNoti[]) => {
-    // if (loading)
-    //   return (
-    //     <tr>
-    //       <td colSpan="6">
-    //         <Loading />
-    //       </td>
-    //     </tr>
-    //   );
+  const initRenderListNotify = (list: Types.notiFetch[]) => {
+    if (loading && list.length === 0)
+      return (
+        <tr>
+          <td colSpan={6}>
+            <Loading />
+          </td>
+        </tr>
+      );
+    if (error && stMessage !== "")
+      return (
+        <tr>
+          <td colSpan={6}>
+            <Alert className="pageAlert mt-0" variant="danger">
+              {stMessage}
+            </Alert>
+          </td>
+        </tr>
+      );
     if (!list || list.length === 0)
       return (
         <tr>
@@ -37,18 +56,18 @@ const HomePage: React.FC = () => {
         </tr>
       );
     let result = null;
-    result = list.map((item: itemNoti) => {
+    result = list.map((item: Types.notiFetch) => {
       return (
         <tr key={item._id}>
           <td>
             <Checkbox
               chkId={`chk-${item._id}`}
-              chkDefault={item.checked}
+              chkDefault={item.checked ? true : false}
               initHandleCheckboxEvent={initHandleCheckboxEvent}
             />
           </td>
           <td className="icon">
-            {initCheckTypeUrl(item.notifyIcon) ? (
+            {item.notifyIcon && item.notifyIcon !== '' ? (
               <img src={item.notifyIcon} alt={item.notifyName} />
             ) : (
               <img
@@ -59,8 +78,8 @@ const HomePage: React.FC = () => {
           </td>
           <td>{item.notifyName}</td>
           <td className="notifyStatus">
-            <span className={`ic ${item.notifyStatus ? "on" : "off"}`}></span>
-            <span> {item.notifyStatus ? "Bật" : "Tắt"}</span>
+            <span className={`ic ${item.notifyStatus === 'true' ? "on" : "off"}`}></span>
+            <span> {item.notifyStatus === 'true' ? "Bật" : "Tắt"}</span>
           </td>
           <td>{item.notifyType}</td>
           <td>
@@ -80,7 +99,7 @@ const HomePage: React.FC = () => {
               href="#"
               onClick={e => {
                 e.preventDefault();
-                initRemoveNotify(item);
+                initRemoveNotify(item._id);
               }}
               title="Xóa thông báo"
             >
@@ -95,36 +114,74 @@ const HomePage: React.FC = () => {
     return result;
   };
   const initHandleCheckboxEvent = (event: any) => {
-    // var { type } = event;
-    // setCheckAll(false);
-    // switch (type) {
-    //   case "addAll":
-    //     setCount(listNotify.length);
-    //     setCheckAll(true);
-    //     break;
-    //   case "addItem":
-    //     setCount(count + 1);
-    //     if (count === listNotify.length - 1) setCheckAll(true);
-    //     break;
-    //   case "removeAll":
-    //     setCount(0);
-    //     break;
-    //   case "removeItem":
-    //     setCount(count - 1);
-    //     break;
-    // }
-    // appToggleCheckboxNotify(event);
+    var { type, value } = event;
+    setCheckAll(false);
+    switch (type) {
+      case "addAll":
+        setCount(stListNotify.length);
+        setCheckedListNotify(true);
+        setCheckAll(true);
+        break;
+      case "addItem":
+        setCount(count + 1);
+        stListNotify[findItemInList(value)].checked = true;
+        if (count === stListNotify.length - 1) setCheckAll(true);
+        break;
+      case "removeAll":
+        setCheckedListNotify(false);
+        setCount(0);
+        break;
+      case "removeItem":
+        stListNotify[findItemInList(value)].checked = false;
+        setCount(count - 1);
+        break;
+    }
   };
-  const initRemoveNotify = (item: itemNoti) => {
-    var array = [];
-    if (!Array.isArray(item)) array.push(item);
-    else array = item;
+  const findItemInList = (id: string) => {
+    let ind = stListNotify.findIndex(item => {
+      return id.indexOf(item._id) !== -1;
+    });
+    return ind;
+  };
+  const setCheckedListNotify = (checked: boolean) => {
+    return stListNotify.map(item => {
+      return item.checked = checked;
+    });
+  };
+  const initRemoveNotify = (id: string) => {
+    var array: any[] = [];
+    if (!Array.isArray(id)) array.push({_id: id});
+    else array = id;
     setArrItemRemove(array);
     setShowModal(true);
   };
+  const initConfirmActionFromProps = (confirm: boolean) => {
+    if(confirm){
+      appDeleteListNotify(arrItemRemove);
+    }
+    else
+      setShowModal(confirm);
+  }
+  useEffect(() => {
+    appFetchListNotify();
+    return () => {
+      appResetStateNotify();
+    }
+  }, []);
+
+  useEffect(() => {
+    setListNotify(list_notify);
+    setMessage(message);
+  }, [list_notify, message]);
+
+  useEffect(() => {
+    setShowModal(false);
+  }, [list_notify]);
   return (
     <div className="homePage">
       <Header type="view" title="Quản lý thông báo" />
+      <Snackbar message={stMessage} error={error} />
+      <ModalConfirm toggleModal={showModal} loading={loading} confirmActionFromProps={initConfirmActionFromProps}/>
       <Container fluid={true}>
         <div className="boxContent">
           <Search />
@@ -133,21 +190,29 @@ const HomePage: React.FC = () => {
               <thead>
                 <tr>
                   <th>
-                    <Checkbox
-                      chkId="chkAll"
-                      chkDefault={checkAll}
-                      initHandleCheckboxEvent={initHandleCheckboxEvent}
-                    />
-                    <div
-                      className={`chkAllDropdown ${count > 0 ? "open" : ""}`}
-                    >
-                      <ul className="list">
-                        <li>Đã chọn {count} thông báo</li>
-                        <li>
-                          <a href="#">Xóa {count} thông báo đã chọn</a>
-                        </li>
-                      </ul>
-                    </div>
+                    {list_notify ? (
+                      <>
+                        <Checkbox
+                          chkId="chkAll"
+                          chkDefault={checkAll}
+                          initHandleCheckboxEvent={initHandleCheckboxEvent}
+                        />
+                        <div
+                          className={`chkAllDropdown ${
+                            count > 0 ? "open" : ""
+                          }`}
+                        >
+                          <ul className="list">
+                            <li>Đã chọn {count} thông báo</li>
+                            <li>
+                              <a href="#">Xóa {count} thông báo đã chọn</a>
+                            </li>
+                          </ul>
+                        </div>
+                      </>
+                    ) : (
+                      <></>
+                    )}
                   </th>
                   <th></th>
                   <th>Tên thông báo</th>
@@ -156,7 +221,7 @@ const HomePage: React.FC = () => {
                   <th>Thời gian tạo</th>
                 </tr>
               </thead>
-              <tbody>{initRenderListNotify([])}</tbody>
+              <tbody>{initRenderListNotify(stListNotify)}</tbody>
             </Table>
           </div>
         </div>
@@ -164,17 +229,19 @@ const HomePage: React.FC = () => {
     </div>
   );
 };
-// const mapStateToProps = state => {
-//     return {
-  
-//     }
-//   }
-//   const mapDispatchToProps = dispatch => {
-//     return {
-//       // appFetchListNotify: () => dispatch(fetchListNotification()),
-//       // appResetNotification: () => dispatch(resetFetchNotification()),
-//       // appToggleCheckboxNotify: tp => dispatch(toggleCheckboxNotify(tp))
-//     }
-//   }
-//   // export default connect(mapStateToProps,mapDispatchToProps)(HomePage);
-export default HomePage;
+const mapStateToProps = (state: Types.fetchNotiApp) => {
+  return {
+    loading: state.fetch.loading,
+    error: state.fetch.error,
+    message: state.fetch.message,
+    list_notify: state.fetch.list_notify
+  };
+};
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    appFetchListNotify: () => dispatch(actFetchNotify()),
+    appDeleteListNotify: (list: string[]) => dispatch(actDeleteNotify(list)),
+    appResetStateNotify: () => dispatch({type: Types.FETCH_RESET_STATE})
+  };
+};
+export default connect(mapStateToProps, mapDispatchToProps)(HomePage);

@@ -17,3 +17,23 @@ export const actUploadImageFail = (error: any): Types.UploadImageTypes => {
         payload: error
     }
 }
+
+// Delete image
+export const actDeleteImage = (fileName: string | undefined): Types.UploadImageTypes => {
+    return {
+        type: Types.DELETE_IMAGE,
+        payload: fileName
+    }
+}
+export const actDeleteImageSuccess = (data: any): Types.UploadImageTypes => {
+    return {
+        type: Types.DELETE_IMAGE_SUCCESS,
+        payload: data
+    }
+}
+export const actDeleteImageFail = (error: any): Types.UploadImageTypes => {
+    return {
+        type: Types.DELETE_IMAGE_FAIL,
+        payload: error
+    }
+}

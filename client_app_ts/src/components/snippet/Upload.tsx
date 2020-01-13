@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect, ReactHTMLElement } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { connect } from "react-redux";
 import { Form, Alert } from "react-bootstrap";
-import { actUploadImage } from "../../actions/upload/upload";
+import { actUploadImage, actDeleteImage } from "../../actions/upload/upload";
 import * as Types from "../../constants/upload/typeUpload";
 interface uploadProps {
   label: string;
@@ -10,7 +10,10 @@ interface uploadProps {
   message: string;
   imgUrl?: string;
   fileName?: string;
+  idNoti?: string;
   appActUploadImage: (file: File) => void;
+  appActDeleteImage: (fileName: string | undefined) => void;
+  getFileImageProps: (name: string) => void;
 }
 const Upload: React.FC<uploadProps> = props => {
   const {
@@ -20,7 +23,10 @@ const Upload: React.FC<uploadProps> = props => {
     message,
     imgUrl,
     appActUploadImage,
-    fileName
+    appActDeleteImage,
+    fileName,
+    idNoti,
+    getFileImageProps
   } = props;
   const [stError, setError] = useState<boolean>(error);
   const [stMessage, setMessage] = useState<string>(message);
@@ -30,7 +36,6 @@ const Upload: React.FC<uploadProps> = props => {
   const initHandleChange = (event: any) => {
     let files: any = event.target.files;
     let file: any = files[0];
-    console.log(file);
     if (!file) return false;
 
     let filesize: number = parseInt((file.size / 1024 / 1024).toFixed(4));
@@ -40,15 +45,16 @@ const Upload: React.FC<uploadProps> = props => {
       return false;
     }
     setImageFile(file);
-    console.log("imageFile: ", imageFile);
+    initDeleteImageFile();
+    appActUploadImage(file);
+  };
+  const initPreviewImageUpload = () => {
     var reader: any = new FileReader();
     reader.onload = function() {
       setImgUrl(reader.result);
     };
-    reader.readAsDataURL(file);
-    appActUploadImage(file);
+    reader.readAsDataURL(imageFile);
   };
-  const initPreviewImageUpload = () => {};
   const initToggleInputFile = () => {
     inputUploadFile.current.click();
     setError(false);
@@ -58,15 +64,35 @@ const Upload: React.FC<uploadProps> = props => {
     e.preventDefault();
     setImageFile("");
     setImgUrl("");
+    initDeleteImageFile();
+  };
+  const initDeleteImageFile = () => {
+    if ((fileName && fileName !== "") || (imgUrl && imgUrl !== "")) {
+      let imgFileName: string | undefined = fileName;
+      if (imgUrl && imgUrl !== "") imgFileName = imgUrl;
+      if (imgFileName && imgFileName.indexOf("/") > -1)
+        imgFileName = imgFileName.split("/").pop();
+      if (idNoti && idNoti !== "") imgFileName += "--" + idNoti;
+      appActDeleteImage(imgFileName);
+    }
   };
   useEffect(() => {
     setError(error);
     setMessage(message);
     setImgUrl(imgUrl);
     if (fileName && fileName !== "") {
-      console.log("fileName: ", fileName);
+      getFileImageProps(fileName);
     }
-  }, [error, message, imgUrl, fileName]);
+    if (imageFile !== "") {
+      initPreviewImageUpload();
+    }
+  }, [error, message, imgUrl, fileName, imageFile]);
+
+  useEffect(() => {
+    if (fileName === "" && imageFile !== "") {
+      setImgUrl("");
+    }
+  }, [fileName]);
   return (
     <>
       <Form.Label>{label}</Form.Label>
@@ -153,7 +179,9 @@ const mapStateToProps = (state: Types.uploadApp) => {
 };
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    appActUploadImage: (file: File) => dispatch(actUploadImage(file))
+    appActUploadImage: (file: File) => dispatch(actUploadImage(file)),
+    appActDeleteImage: (fileName: string | undefined) =>
+      dispatch(actDeleteImage(fileName))
   };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Upload);

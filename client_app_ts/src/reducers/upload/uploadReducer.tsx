@@ -3,19 +3,37 @@ const initialState: Types.uploadState = {
   error: false,
   loading: false,
   message: "",
-  fileName: "",
+  fileName: ""
 };
-const uploadReducer = (state = initialState, action: Types.UploadImageTypes) => {
+const uploadReducer = (
+  state = initialState,
+  action: Types.UploadImageTypes
+) => {
   switch (action.type) {
     case Types.UPLOAD_IMAGE:
-      return { ...state, loading: true };
+      return { ...state, loading: true, fileName: "", error: false, message: "" };
     case Types.UPLOAD_IMAGE_SUCCESS:
-      console.log("Reducer succ: ", action.payload);
-      const { fileName, error, message } = action.payload;
+      let { fileName, error, message } = action.payload;
       return { ...state, loading: false, error, message, fileName };
     case Types.UPLOAD_IMAGE_FAIL:
-      console.log("Reducer err: ", action.payload);
-      return { ...state, loading: false, error: true, message: action.payload.toString() };
+      return {
+        ...state,
+        loading: false,
+        error: true,
+        message: action.payload.toString()
+      };
+    // Delete image
+    case Types.DELETE_IMAGE:
+      return { ...state, loading: true, fileName: "", error: false, message: "" };
+    case Types.DELETE_IMAGE_SUCCESS:
+      return { ...state, loading: false};
+    case Types.DELETE_IMAGE_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: true,
+        message: action.payload.toString()
+      };
     default:
       return state;
   }

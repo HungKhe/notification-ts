@@ -1,9 +1,7 @@
 import React from 'react';
-import {RouteComponentProps} from "react-router-dom";
 import HomePage from '../views/HomePage/index';
 import CreatePage from '../views/CreatePage/index';
 import EditPage from '../views/EditPage/index';
-type TParams = { id: string };
 const routes = [
     {
         path: '/',
@@ -18,7 +16,7 @@ const routes = [
     {
         path: '/edit/:id',
         exact: false,
-        main: ({match}: any) => <EditPage match={match} />
+        main: (route: any) => <EditPage route={route} />
     },
     {
         path: '*',

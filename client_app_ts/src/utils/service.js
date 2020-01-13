@@ -3,11 +3,26 @@ export default {
   apiUploadImage(file) {
     return Api().post(`upload`, file);
   },
+  apiDeleteImage(fileName) {
+    return Api().delete(`upload/delete/${ fileName }`);
+  },
   apiCreateNotify(noti) {
     return Api().post(`notify/create`, noti);
   },
-  fetchListNotification() {
-    return Api().get("notification");
+  apiFetchListNotify() {
+    return Api().get("notify");
+  },
+  apiFetchItemNotify(id){
+    return Api().get(`notify/${ id }`);
+  },
+  apiUpdateItemNotify(noti){
+    return Api().put(`notify`, noti);
+  },
+
+
+
+  apiDeleteListNotify(list) {
+    return Api().post("notify", list);
   },
   fetchItemNotification(id) {
     return Api().get("notification?id=" + id);

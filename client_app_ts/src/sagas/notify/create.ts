@@ -1,19 +1,19 @@
 import * as Types from '../../constants/notify/create';
 import { takeEvery, call, put, delay } from "redux-saga/effects";
 import Service from '../../utils/service';
-import { actUploadImageFail, actUploadImageSuccess } from '../../actions/upload/upload';
+import { actCreateNotifyFail, actCreateNotifySuccess } from '../../actions/notify/create';
 
-function createNotify(noti: any){
-    return Service.apiUploadImage(noti);
+function createNotify(noti: Types.notiPost){
+    return Service.apiCreateNotify(noti);
 }
 function* workerCreateNotify({payload}: any){
-    delay(2000)
+    yield delay(2000)
     try{
         const response: any = yield call(createNotify, payload);
         const data: any = response.data;
-        yield put(actUploadImageSuccess(data));
+        yield put(actCreateNotifySuccess(data));
     }catch(error){
-        yield put(actUploadImageFail(error));
+        yield put(actCreateNotifyFail(error));
     }
 }
 export const createNotiSaga = [

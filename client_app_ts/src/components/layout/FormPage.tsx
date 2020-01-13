@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Form, Col } from "react-bootstrap";
+import { Form, Col, Alert } from "react-bootstrap";
 import _ from "lodash";
 import Upload from "../snippet/Upload";
 interface Fields {
@@ -8,19 +8,26 @@ interface Fields {
 interface Props {
   fields?: any;
   loading?: boolean;
-  appCreateNotify?: (noti: any) => void;
+  error?: boolean;
+  message?: string;
+  getNotiFromProps?: (noti: any) => void; 
 }
 interface State {
   loading: boolean;
+  error?: boolean;
+  message?: string;
   fields?: any;
 }
 class CreatePage extends Component<Props, State> {
-  static defaultProps: Props = {
-    fields: {}
-  };
   state: State = {
     loading: this.props.loading || false,
-    fields: this.props.fields || {}
+    error: this.props.error || false,
+    message: this.props.message || "",
+    fields: this.props.fields || {
+      notifyLogin: "false",
+      notifyStatus: "false",
+      notifyIcon: ""
+    }
   };
   initHandleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let { name, value } = event.target;
@@ -36,14 +43,30 @@ class CreatePage extends Component<Props, State> {
   };
   handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // event.stopPropagation();
-    // this.setState({
-    //   loading: true
-    // });
-    console.log(this.state.fields);
+    if(this.props.getNotiFromProps)
+      this.props.getNotiFromProps(this.state.fields);
   };
+  componentDidMount(){
+  }
   componentWillReceiveProps(newProps: Props) {
-    console.log("newProps: ", newProps);
+    if(newProps.error !== this.props.error || newProps.message !== this.props.message || newProps.loading !== this.props.loading)
+      this.setState({
+        error: newProps.error || false,
+        message: newProps.message || "",
+        loading: newProps.loading || false
+      })
+  }
+  componentWillUnmount(){
+    this.setState({
+      fields: {}
+    });
+  }
+  getFileImageProps = (name: string) => {
+    let notifiObject = this.state.fields;
+    notifiObject.notifyIcon = name;
+    this.setState({
+      fields: notifiObject
+    })
   }
   render() {
     return (
@@ -72,7 +95,7 @@ class CreatePage extends Component<Props, State> {
               />
             </Form.Group>
             <Form.Group as={Col} md="6" sm="6" controlId="validationIcon">
-              <Upload label="Chọn ảnh làm đại diện" />
+              <Upload label="Chọn ảnh làm đại diện" idNoti={this.state.fields._id ? this.state.fields._id : '' } imgUrl={this.state.fields.notifyIcon ? this.state.fields.notifyIcon : ''} getFileImageProps={this.getFileImageProps}/>
             </Form.Group>
             <Form.Group as={Col} md="6" sm="6" controlId="validationLink">
               <Form.Label>Link khi bấm vào thông báo</Form.Label>
@@ -94,7 +117,7 @@ class CreatePage extends Component<Props, State> {
                     onChange={this.initHandleChange}
                     name="notifyStatus"
                     id="yes"
-                    defaultChecked={this.state.fields.notifyStatus}
+                    defaultChecked={this.state.fields.notifyStatus === 'true'}
                   />
                   <input
                     type="radio"
@@ -102,7 +125,7 @@ class CreatePage extends Component<Props, State> {
                     onChange={this.initHandleChange}
                     name="notifyStatus"
                     id="no"
-                    defaultChecked={!this.state.fields.notifyStatus}
+                    defaultChecked={this.state.fields.notifyStatus !== 'true'}
                   />
                   <div className="switch">
                     <label htmlFor="yes">Bật</label>
@@ -137,6 +160,15 @@ class CreatePage extends Component<Props, State> {
                 defaultValue={this.state.fields.notifyContent}
               />
             </Form.Group>
+            {this.state.error && this.state.message !== "" ? (
+              <Form.Group as={Col} md="12" sm="12">
+                <Alert className="pageAlert mt-0" variant="danger">
+                  {this.state.message}
+                </Alert>
+              </Form.Group>
+            ) : (
+              ""
+            )}
             <Form.Group as={Col} md="12" sm="12" className="text-right">
               <button
                 disabled={this.state.loading}
@@ -158,7 +190,7 @@ class CreatePage extends Component<Props, State> {
                     <svg className="svg-icon" viewBox="0 0 20 20">
                       <path d="M17.064,4.656l-2.05-2.035C14.936,2.544,14.831,2.5,14.721,2.5H3.854c-0.229,0-0.417,0.188-0.417,0.417v14.167c0,0.229,0.188,0.417,0.417,0.417h12.917c0.229,0,0.416-0.188,0.416-0.417V4.952C17.188,4.84,17.144,4.733,17.064,4.656M6.354,3.333h7.917V10H6.354V3.333z M16.354,16.667H4.271V3.333h1.25v7.083c0,0.229,0.188,0.417,0.417,0.417h8.75c0.229,0,0.416-0.188,0.416-0.417V3.886l1.25,1.239V16.667z M13.402,4.688v3.958c0,0.229-0.186,0.417-0.417,0.417c-0.229,0-0.417-0.188-0.417-0.417V4.688c0-0.229,0.188-0.417,0.417-0.417C13.217,4.271,13.402,4.458,13.402,4.688"></path>
                     </svg>{" "}
-                    {this.props.fields ? "Lưu thông báo" : "Tạo thông báo"}
+                    {this.props.fields && this.props.fields._id ? "Lưu thông báo" : "Tạo thông báo"}
                   </>
                 )}
               </button>
