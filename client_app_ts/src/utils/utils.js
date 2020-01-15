@@ -6,3 +6,4 @@ export const findItemInList = (list, id) => {
     let ind = list.findIndex(item => {return id.indexOf(item._id) !== -1});
     return ind;
 }
+export const imageUrl = `http://localhost:8888/api/images/`;

@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Loading() {
+const Loading: React.FC = () => {
     return(
         <div className="lineLoading">
             <div className="lds-ring">

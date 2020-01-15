@@ -13,8 +13,8 @@ const schema = {
             notifyIcon : String,
             notifyLink : String,
             notifyContent : String,
-            notifyLogin: Boolean,
-            notifyStatus: Boolean,
+            notifyLogin: String,
+            notifyStatus: String,
             notifyCreateTime: String
         }
     ]

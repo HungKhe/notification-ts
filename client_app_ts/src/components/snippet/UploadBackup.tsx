@@ -1,41 +1,28 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, ReactHTMLElement } from "react";
 import { connect } from "react-redux";
 import { Form, Alert } from "react-bootstrap";
-import { actUploadImage, actDeleteImage } from "../../actions/upload/upload";
-import * as Types from "../../constants/upload/typeUpload";
+import { actUploadImage } from "../../actions/upload/upload";
+import * as Types from '../../constants/upload/typeUpload';
 interface uploadProps {
-  label: string;
-  error: boolean;
-  loading: boolean;
-  message: string;
-  imgUrl?: string;
-  fileName?: string;
-  idNoti?: string;
-  appActUploadImage: (file: File) => void;
-  appActDeleteImage: (fileName: string | undefined) => void;
-  getFileImageProps: (name: string) => void;
+    label: string,
+    error: boolean,
+    loading: boolean,
+    message: string,
+    imgUrl: string,
+    fileName: string,
+    appActUploadImage: (file: File) => void
 }
 const Upload: React.FC<uploadProps> = props => {
-  const {
-    label,
-    error,
-    loading,
-    message,
-    imgUrl,
-    appActUploadImage,
-    appActDeleteImage,
-    fileName,
-    idNoti,
-    getFileImageProps
-  } = props;
-  const [stError, setError] = useState<boolean>(error);
-  const [stMessage, setMessage] = useState<string>(message);
-  const [stImgUrl, setImgUrl] = useState<string | undefined>(imgUrl);
-  const [imageFile, setImageFile] = useState<any>("");
-  const inputUploadFile = useRef<any | null>();
-  const initHandleChange = (event: any) => {
-    let files: any = event.target.files;
-    let file: any = files[0];
+  const { label, error, loading, message, imgUrl, appActUploadImage, fileName } = props;
+  let [stError, setError] = useState<boolean>(error);
+  let [stMessage, setMessage] = useState<string>(message);
+  let [stLoading, setLoading] = useState<boolean>(loading);
+  let [imageUrl, setImageUrl] = useState<string>(imgUrl);
+  let [stFileName, setStFileName] = useState<string>(fileName);
+  let [imageFile, setImageFile] = useState<File | null>(null);
+  const inputUploadFile = useRef<any>(null);
+  const initHandleChange = (e: any) => {
+    let file: File = e.currentTarget.files[0];
     if (!file) return false;
 
     let filesize: number = parseInt((file.size / 1024 / 1024).toFixed(4));
@@ -45,16 +32,17 @@ const Upload: React.FC<uploadProps> = props => {
       return false;
     }
     setImageFile(file);
-    initDeleteImageFile();
+    console.log('imageFile: ', imageFile)
+    var reader: any = new FileReader();
+    reader.onload = function() {
+      setImageUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
     appActUploadImage(file);
   };
   const initPreviewImageUpload = () => {
-    var reader: any = new FileReader();
-    reader.onload = function() {
-      setImgUrl(reader.result);
-    };
-    reader.readAsDataURL(imageFile);
-  };
+
+  }
   const initToggleInputFile = () => {
     inputUploadFile.current.click();
     setError(false);
@@ -62,51 +50,19 @@ const Upload: React.FC<uploadProps> = props => {
   };
   const initRemoveImage = (e: any) => {
     e.preventDefault();
-    setImageFile("");
-    setImgUrl("");
-    initDeleteImageFile();
-  };
-  const initDeleteImageFile = () => {
-    if ((fileName && fileName !== "") || (imgUrl && imgUrl !== "")) {
-      let imgFileName: string | undefined = fileName;
-      if (imgUrl && imgUrl !== "") imgFileName = imgUrl;
-      if (imgFileName && imgFileName.indexOf("/") > -1)
-        imgFileName = imgFileName.split("/").pop();
-      if (idNoti && idNoti !== "") imgFileName += "--" + idNoti;
-      appActDeleteImage(imgFileName);
-    }
+    setImageFile(null);
+    setImageUrl("");
   };
   useEffect(() => {
+    setLoading(loading);
     setError(error);
     setMessage(message);
-    setImgUrl(imgUrl);
-    if (fileName && fileName !== "") {
-      getFileImageProps(fileName);
-    }
-    if (imageFile !== "") {
-      initPreviewImageUpload();
-    }
-  }, [error, message, imgUrl, fileName, imageFile]);
-
-  useEffect(() => {
-    if (fileName === "" && imageFile !== "") {
-      setImgUrl("");
-    }
-  }, [fileName]);
+    setStFileName(stFileName);
+  }, [props]);
   return (
     <>
       <Form.Label>{label}</Form.Label>
-      {/* <Form.Control
-        type="file"
-        name="fileUpload"
-        onChange={initHandleChange}
-        className="d-none"
-        ref={inputUploadFile}
-        multiple={false}
-        accept="image/png, image/jpeg"
-        value=""
-      /> */}
-      <input
+      <Form.Control
         type="file"
         name="fileUpload"
         onChange={initHandleChange}
@@ -117,12 +73,12 @@ const Upload: React.FC<uploadProps> = props => {
       />
       <div className="action">
         <button
-          disabled={loading}
+          disabled={stLoading}
           type="button"
           className="btn insButton mr-3"
           onClick={initToggleInputFile}
         >
-          {loading ? (
+          {stLoading ? (
             <>
               <svg className="svg-icon" viewBox="0 0 20 20">
                 <path
@@ -148,9 +104,9 @@ const Upload: React.FC<uploadProps> = props => {
             </>
           )}
         </button>
-        {stImgUrl ? (
+        {imageUrl ? (
           <div className="reviewFile">
-            <img src={stImgUrl} height="50px" alt="" />
+            <img src={imageUrl} height="50px" alt="" />
             <a href="#" onClick={initRemoveImage}>
               ×
             </a>
@@ -168,7 +124,7 @@ const Upload: React.FC<uploadProps> = props => {
       )}
     </>
   );
-};
+}
 const mapStateToProps = (state: Types.uploadApp) => {
   return {
     loading: state.upload.loading,
@@ -179,9 +135,7 @@ const mapStateToProps = (state: Types.uploadApp) => {
 };
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    appActUploadImage: (file: File) => dispatch(actUploadImage(file)),
-    appActDeleteImage: (fileName: string | undefined) =>
-      dispatch(actDeleteImage(fileName))
+    appActUploadImage: (file: File) => dispatch(actUploadImage(file))
   };
 };
 export default connect(mapStateToProps, mapDispatchToProps)(Upload);

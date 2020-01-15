@@ -1,6 +1,8 @@
-const fse = require("fs-extra");
 const multer = require("multer");
 const path = require("path");
+const utils = require("../../helper/utils");
+const db = require("../db/shop.db");
+const _ = require("lodash");
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     cb(null, "./uploads");
@@ -37,11 +39,11 @@ module.exports = {
         });
       }
       const processedFile = req.file || {};
+      // console.log('processedFile: ', processedFile)
       res.json({
         error: false,
         message: "Upload thành công!",
-        path: processedFile.path,
-        fileName: processedFile.originalname
+        fileName: utils.initImageUrl() + processedFile.filename
       });
     });
     // createMulterFile(function(data) {
@@ -60,6 +62,53 @@ module.exports = {
     //     }
     //   });
     // });
+  },
+  initDeleteImageFile: (req, res) => {
+    var { fileName } = req.params;
+    var id = "";
+    if (!fileName)
+      return res.json({
+        message: "Lỗi!!! Thiếu dữ liệu..."
+      });
+    if (fileName.indexOf("--") > -1) {
+      let spl = fileName.split("--");
+      fileName = spl[0];
+      id = spl[1];
+    }
+    const domain = "https://inspire-apps.myharavan.com";
+    const pathFile = path.resolve("uploads", fileName);
+    fs.unlink(pathFile, async err => {
+      if (err) {
+        return res.json({
+          message: err
+        });
+      }
+      if (id !== "") {
+        var dataShop = await db
+          .dbFindDataShopWithField(domain, "list_notify")
+          .then(dt => dt)
+          .catch(err => err);
+        if (dataShop && dataShop.list_notify) {
+          let listNoti = dataShop.list_notify;
+          let ind = _.findIndex(listNoti, x => {
+            return x._id.toString() === id;
+          });
+          if (ind > -1 && listNoti[ind].notifyIcon !== "") {
+            listNoti[ind].notifyIcon = "";
+            db.dbUpdateFieldShop(domain, "list_notify", listNoti)
+              .then(dt => {})
+              .catch(e => {
+                return console.log(e);
+              });
+          }
+        }
+      }
+      res.status(200).json({
+        error: false,
+        message: "Xóa file thành công!!!",
+        fileName
+      });
+    });
   }
 };
 
